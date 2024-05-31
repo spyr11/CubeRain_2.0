@@ -2,15 +2,15 @@
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class ObjectSpawner : MonoBehaviour
+public class ObjectSpawner<T> : MonoBehaviour where T : Component
 {
     [SerializeField] private Collider _floor;
-    [SerializeField] private Cube _cube;
+    [SerializeField] private T _object;
     [SerializeField, Range(0, int.MaxValue)] private float _spawnDelay;
 
     private int _poolCapacity;
     private int _poolMaxSize;
-    private ObjectPool<Cube> _pool;
+    private ObjectPool<T> _pool;
     private Vector3 _spawnArea;
 
     private void Awake()
@@ -18,10 +18,10 @@ public class ObjectSpawner : MonoBehaviour
         _poolCapacity = 10;
         _poolMaxSize = 10;
 
-        _pool = new ObjectPool<Cube>(
-               createFunc: () => Instantiate(_cube),
-               actionOnGet: (cube) => ActionOnGet(cube),
-               actionOnDestroy: (cube) => Destroy(cube.gameObject),
+        _pool = new ObjectPool<T>(
+               createFunc: () => Instantiate(_object),
+               actionOnGet: (obj) => ActionOnGet(obj),
+               actionOnDestroy: (obj) => Destroy(obj.gameObject),
                defaultCapacity: _poolCapacity,
                maxSize: _poolMaxSize
            );
@@ -46,19 +46,19 @@ public class ObjectSpawner : MonoBehaviour
         }
     }
 
-    private void ActionOnGet(Cube cube)
+    private void ActionOnGet(T obj)
     {
-        cube.Disabled += OnDisabled;
+        //obj.Disabled += OnDisabled;
 
-        cube.gameObject.SetActive(true);
-        cube.gameObject.transform.position = GetPosition();
+        obj.gameObject.SetActive(true);
+        obj.gameObject.transform.position = GetPosition();
     }
 
-    private void OnDisabled(Cube cube)
+    private void OnDisabled(T obj)
     {
-        cube.Disabled -= OnDisabled;
+        //obj.Disabled -= OnDisabled;
 
-        _pool.Release(cube);
+        _pool.Release(obj);
     }
 
     private Vector3 GetPosition()

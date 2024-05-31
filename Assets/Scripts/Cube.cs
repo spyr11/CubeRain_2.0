@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Renderer))]
-public class Cube : MonoBehaviour
+public class Cube : MonoBehaviour, ISpawnable
 {
     private Renderer _renderer;
     private Color _defaultColor;
