@@ -3,12 +3,13 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Renderer))]
-public class Cube : MonoBehaviour, ISpawnable
+public class Cube : MonoBehaviour, ISpawnable<Cube>
 {
+    private readonly float _destroyMinValue = 2f;
+    private readonly float _destroyMaxValue = 6f;
+
     private Renderer _renderer;
     private Color _defaultColor;
-    private int _destroyMinValue;
-    private int _destroyMaxValue;
     private bool _hasHit;
 
     public event Action<Cube> Disabled;
@@ -18,9 +19,6 @@ public class Cube : MonoBehaviour, ISpawnable
         _renderer = GetComponent<Renderer>();
 
         _defaultColor = _renderer.material.color;
-
-        _destroyMinValue = 2;
-        _destroyMaxValue = 6;
     }
 
     private void OnEnable()
@@ -28,11 +26,6 @@ public class Cube : MonoBehaviour, ISpawnable
         _hasHit = false;
 
         SetDefaultColor();
-    }
-
-    private void OnDisable()
-    {
-        Disabled?.Invoke(this);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -43,29 +36,32 @@ public class Cube : MonoBehaviour, ISpawnable
             {
                 _hasHit = true;
 
-                StartCoroutine(OnHit());
+                StartCoroutine(Hit());
             }
         }
     }
 
-    private IEnumerator OnHit()
+    private IEnumerator Hit()
     {
         ChangeColor();
 
-        float destroyDelay = UnityEngine.Random.Range(_destroyMinValue, _destroyMaxValue);
+        yield return new WaitForSeconds(GetDelayTime());
 
-        yield return new WaitForSeconds(destroyDelay);
-
-        gameObject.SetActive(false);
+        Disabled?.Invoke(this);
     }
 
     private void ChangeColor()
     {
-        _renderer.material.color = UnityEngine.Random.ColorHSV(); ;
+        _renderer.material.color = UnityEngine.Random.ColorHSV();
     }
 
     private void SetDefaultColor()
     {
         _renderer.material.color = _defaultColor;
+    }
+
+    private float GetDelayTime()
+    {
+        return UnityEngine.Random.Range(_destroyMinValue, _destroyMaxValue);
     }
 }

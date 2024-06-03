@@ -1,16 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 [RequireComponent(typeof(Renderer))]
-public class Bomb : MonoBehaviour, ISpawnable
+public class Bomb : MonoBehaviour, ISpawnable<Bomb>
 {
+    private readonly float _destroyMinValue = 2f;
+    private readonly float _destroyMaxValue = 6f;
+
     [SerializeField] private float _explosingForce;
     [SerializeField] private float _explosingRadius;
 
     private Renderer _renderer;
 
-    private float _timer;
+    public event Action<Bomb> Disabled;
 
     private void Awake()
     {
@@ -18,14 +23,14 @@ public class Bomb : MonoBehaviour, ISpawnable
         _renderer.material.color = Color.black;
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        StartCoroutine(FadeColor(_timer));
+        StartCoroutine(FadeColor(GetDelayTime()));
     }
 
-    public void SetTimer(float timer)
+    private float GetDelayTime()
     {
-        _timer = timer;
+        return UnityEngine.Random.Range(_destroyMinValue, _destroyMaxValue);
     }
 
     private IEnumerator FadeColor(float seconds)
@@ -48,12 +53,12 @@ public class Bomb : MonoBehaviour, ISpawnable
 
     private void BlowUp()
     {
-        Explose(GetExplodableObjects());
+        Explode(GetExplosableObjects());
 
-        Destroy(gameObject);
+        Disabled?.Invoke(this);
     }
 
-    private void Explose(List<Rigidbody> targets)
+    private void Explode(List<Rigidbody> targets)
     {
         foreach (Rigidbody target in targets)
         {
@@ -61,19 +66,13 @@ public class Bomb : MonoBehaviour, ISpawnable
         }
     }
 
-    private List<Rigidbody> GetExplodableObjects()
+    private List<Rigidbody> GetExplosableObjects()
     {
         List<Rigidbody> hits = new List<Rigidbody>();
 
         Collider[] colliders = Physics.OverlapSphere(transform.position, _explosingRadius);
 
-        foreach (Collider hit in colliders)
-        {
-            if (hit.attachedRigidbody)
-            {
-                hits.Add(hit.attachedRigidbody);
-            }
-        }
+        hits.AddRange(colliders.Where(hit => hit.attachedRigidbody).Select(hit => hit.attachedRigidbody));
 
         return hits;
     }
