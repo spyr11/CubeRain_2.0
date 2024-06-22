@@ -10,7 +10,7 @@ public class ColorFader : MonoBehaviour
 
     private Renderer _renderer;
 
-    public event Action ColorChanged;
+    public event Action Changed;
 
     public void Init()
     {
@@ -38,7 +38,7 @@ public class ColorFader : MonoBehaviour
             yield return null;
         }
 
-        ColorChanged?.Invoke();
+        Changed?.Invoke();
     }
 
     private float GetDelayTime()

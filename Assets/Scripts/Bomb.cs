@@ -24,12 +24,12 @@ public class Bomb : MonoBehaviour, ISpawnable<Bomb>
     {
         _colorFader.StartFading();
 
-        _colorFader.ColorChanged += BlowUp;
+        _colorFader.Changed += BlowUp;
     }
 
     private void OnDisable()
     {
-        _colorFader.ColorChanged -= BlowUp;
+        _colorFader.Changed -= BlowUp;
     }
 
     private void BlowUp()
