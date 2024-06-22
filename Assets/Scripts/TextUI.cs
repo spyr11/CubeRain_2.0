@@ -25,7 +25,7 @@ public class TextUI : MonoBehaviour
 
     private void OnEnable()
     {
-        _counter.ChangedActive += OnChangedCurrent;
+        _counter.ChangedActive += OnChangedActive;
         _counter.ChangedTotal += OnChangedTotal;
     }
 
@@ -39,7 +39,7 @@ public class TextUI : MonoBehaviour
         _textTotal.text = value.ToString();
     }
 
-    private void OnChangedCurrent(int value)
+    private void OnChangedActive(int value)
     {
         _textActive.text = value.ToString();
     }

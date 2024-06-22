@@ -10,8 +10,8 @@ public abstract class Spawner<T> : MonoBehaviour, ICounter where T : Component, 
 
     private Vector3 _newPosition;
     private ObjectPool<T> _pool;
-    private int _objectCount;
     private string _objectName;
+    private int _objectCount;
 
     public event Action<int> ChangedActive;
     public event Action<int> ChangedTotal;
