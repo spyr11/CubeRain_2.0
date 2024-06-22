@@ -1,54 +1,35 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-[RequireComponent(typeof(Renderer))]
+[RequireComponent(typeof(ColorFader))]
 public class Bomb : MonoBehaviour, ISpawnable<Bomb>
 {
-    private readonly float _destroyMinValue = 2f;
-    private readonly float _destroyMaxValue = 6f;
-
     [SerializeField] private float _explosingForce;
     [SerializeField] private float _explosingRadius;
 
-    private Renderer _renderer;
+    private ColorFader _colorFader;
 
     public event Action<Bomb> Disabled;
 
     private void Awake()
     {
-        _renderer = GetComponent<Renderer>();
-        _renderer.material.color = Color.black;
+        _colorFader = GetComponent<ColorFader>();
+
+        _colorFader.Init();
     }
 
     private void OnEnable()
     {
-        StartCoroutine(FadeColor(GetDelayTime()));
+        _colorFader.StartFading();
+
+        _colorFader.ColorChanged += BlowUp;
     }
 
-    private float GetDelayTime()
+    private void OnDisable()
     {
-        return UnityEngine.Random.Range(_destroyMinValue, _destroyMaxValue);
-    }
-
-    private IEnumerator FadeColor(float seconds)
-    {
-        Color color = _renderer.material.color;
-
-        for (float i = seconds; i >= 0; i -= Time.deltaTime)
-        {
-            float number = i / seconds;
-
-            color.a = number;
-
-            _renderer.material.color = color;
-
-            yield return null;
-        }
-
-        BlowUp();
+        _colorFader.ColorChanged -= BlowUp;
     }
 
     private void BlowUp()

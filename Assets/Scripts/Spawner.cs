@@ -1,17 +1,22 @@
-﻿using TMPro;
+﻿using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
 
-public abstract class Spawner<T> : MonoBehaviour where T : Component, ISpawnable<T>
+public abstract class Spawner<T> : MonoBehaviour, ICounter where T : Component, ISpawnable<T>
 {
     [SerializeField] private TextMeshProUGUI _textObjectCount;
     [SerializeField] private T _objectPrefab;
 
-    private int _objectCount;
-
-    private ObjectPool<T> _pool;
-
     private Vector3 _newPosition;
+    private ObjectPool<T> _pool;
+    private int _objectCount;
+    private string _objectName;
+
+    public event Action<int> ChangedActive;
+    public event Action<int> ChangedTotal;
+
+    public string Name => _objectName;
 
     private void Awake()
     {
@@ -19,16 +24,18 @@ public abstract class Spawner<T> : MonoBehaviour where T : Component, ISpawnable
         int poolMaxSize = 10;
 
         _pool = new ObjectPool<T>(
-                          createFunc: () => Instantiate(_objectPrefab),
-                          actionOnGet: (obj) => ActionOnGet(obj),
-                          actionOnRelease: (obj) => ActionOnRelease(obj),
-                          actionOnDestroy: (obj) => Destroy(obj.gameObject),
+                          createFunc: InstantiateObject,
+                          actionOnGet: SetObjectState,
+                          actionOnRelease: ReleaseObject,
+                          actionOnDestroy: DestroyObjects,
                           defaultCapacity: poolCapacity,
                           maxSize: poolMaxSize
                       );
+
+        _objectName = _objectPrefab.GetType().ToString();
     }
 
-    protected virtual void ActionOnRelease(T obj)
+    protected virtual void ReleaseObject(T obj)
     {
         obj.gameObject.SetActive(false);
     }
@@ -40,26 +47,40 @@ public abstract class Spawner<T> : MonoBehaviour where T : Component, ISpawnable
         _pool.Get();
     }
 
-    private void ActionOnGet(T obj)
+    private T InstantiateObject()
     {
+        T obj = Instantiate(_objectPrefab);
+
         obj.Disabled += OnDisabled;
+
+        return obj;
+    }
+
+    private void SetObjectState(T obj)
+    {
         obj.gameObject.SetActive(true);
         obj.gameObject.transform.position = _newPosition;
 
-        ReadObjectCount(obj);
+        CountObjects(obj);
+    }
+
+    private void DestroyObjects(T obj)
+    {
+        obj.Disabled -= OnDisabled;
+
+        Destroy(obj.gameObject);
     }
 
     private void OnDisabled(T obj)
     {
-        obj.Disabled -= OnDisabled;
-
         _pool.Release(obj);
     }
 
-    private void ReadObjectCount(T obj)
+    private void CountObjects(T obj)
     {
         _objectCount++;
 
-        _textObjectCount.text = $" {obj.GetType().ToString()} Total: {_objectCount}  Actve: {_pool.CountActive}";
+        ChangedActive?.Invoke(_pool.CountActive);
+        ChangedTotal?.Invoke(_objectCount);
     }
 }
